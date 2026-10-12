@@ -12,7 +12,7 @@ DB_NAME      = socialnetwork
 
 .PHONY: help dev run build test fmt vet tidy clean \
 	db-up db-down db-reset db-logs psql \
-	migration migrate-up migrate-down migrate-version migrate-force
+	migration migrate-up migrate-down migrate-version migrate-force seed
 
 ## help: In danh sách lệnh
 help:
@@ -102,6 +102,9 @@ migrate-version:
 ## migrate-force: Gỡ dirty state, ví dụ: make migrate-force 3
 migrate-force:
 	migrate -path $(MIGRATIONS_PATH) -database "$(DB_ADDR)" force $(filter-out $@,$(MAKECMDGOALS))
+
+seed:
+	go run ./cmd/migrate/seed/main.go
 
 # Cho phép truyền tham số kiểu "make migration add_foo": mọi tên lạ khớp rule này và không làm gì
 %:

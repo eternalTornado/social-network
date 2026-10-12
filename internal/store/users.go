@@ -24,6 +24,9 @@ func (s *UserStore) Create(ctx context.Context, user *User) error {
 		RETURNING id, created_at
 	`
 
+	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
+	defer cancel()
+
 	err := s.db.QueryRowContext(ctx, query, user.Username, user.Password, user.Email).Scan(&user.ID, &user.CreatedAt)
 	if err != nil {
 		return err

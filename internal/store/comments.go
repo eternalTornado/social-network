@@ -64,10 +64,10 @@ func (s *CommentStore) Create(ctx context.Context, comment *Comment) error {
 	query := `
 		INSERT INTO comments (post_id, user_id, content)
 		VALUES ($1, $2, $3)
-		RETUTNING id, created_at
+		RETURNING id, created_at
 	`
 
-	err := s.db.QueryRowContext(ctx, query).Scan(&comment.ID, &comment.CreatedAt)
+	err := s.db.QueryRowContext(ctx, query, comment.PostID, comment.UserID, comment.Content).Scan(&comment.ID, &comment.CreatedAt)
 	if err != nil {
 		return err
 	}
