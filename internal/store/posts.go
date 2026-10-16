@@ -18,6 +18,12 @@ type Post struct {
 	UpdatedAt string    `json:"updated_at"`
 	Version   int       `json:"version"`
 	Comments  []Comment `json:"comments"`
+	User      User      `json:"user"`
+}
+
+type PostWithMetadata struct {
+	Post
+	CommentsCount int `json:"comments_count"`
 }
 
 type PostStore struct {
@@ -124,4 +130,90 @@ func (s *PostStore) Update(ctx context.Context, post *Post) error {
 	}
 
 	return nil
+}
+
+func (s *PostStore) GetUserFeed(ctx context.Context, userID int64, fq PaginatedFeedQuery) ([]PostWithMetadata, error) {
+	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
+	defer cancel()
+
+	sort := "DESC"
+	if fq.Sort == "asc" {
+		sort = "ASC"
+	}
+
+	query := `
+		SELECT p.id, p.user_id, p.title, p.content, p.created_at, p.version, p.tags,
+		       u.username, COUNT(c.id) AS comments_count
+		FROM posts p
+		LEFT JOIN comments c ON c.post_id = p.id
+		LEFT JOIN users u ON p.user_id = u.id
+		WHERE (p.user_id = $1 OR p.user_id IN (SELECT f.user_id FROM followers f WHERE f.follower_id = $1))
+		  AND (p.title ILIKE '%' || $4 || '%' OR p.content ILIKE '%' || $4 || '%')
+		  AND (p.tags @> $5 OR $5 = '{}')
+		  AND ($6::timestamptz IS NULL OR p.created_at >= $6::timestamptz)
+		  AND ($7::timestamptz IS NULL OR p.created_at <= $7::timestamptz)
+		GROUP BY p.id, u.username
+		ORDER BY p.created_at ` + sort + `
+		LIMIT $2 OFFSET $3
+	`
+
+	tags := fq.Tags
+	if tags == nil {
+		tags = []string{}
+	}
+
+	var since, until any
+	if fq.Since != "" {
+		since = fq.Since
+	}
+	if fq.Until != "" {
+		until = fq.Until
+	}
+
+	rows, err := s.db.QueryContext(
+		ctx,
+		query,
+		userID,
+		fq.Limit,
+		fq.Offset,
+		fq.Search,
+		pq.Array(tags),
+		since,
+		until,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	feed := []PostWithMetadata{}
+	for rows.Next() {
+		var p PostWithMetadata
+
+		if err := rows.Scan(
+			&p.ID,
+			&p.UserID,
+			&p.Title,
+			&p.Content,
+			&p.CreatedAt,
+			&p.Version,
+			pq.Array(&p.Tags),
+			&p.User.Username,
+			&p.CommentsCount,
+			&p.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+
+		feed = append(feed, p)
+	}
+
+	//rows.Err có value nếu rows.Next() phát sinh lỗi
+	//nên việc check được để sau
+	//rows.Next trả false trong 2 case: hết element, hoặc bị lỗi
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return feed, nil
 }

@@ -1,3 +1,4 @@
+// Package db mở connection pool tới Postgres và seed dữ liệu mẫu cho môi trường dev.
 package db
 
 import (

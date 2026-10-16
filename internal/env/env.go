@@ -1,3 +1,5 @@
+// Package env đọc biến môi trường, trả về giá trị mặc định khi biến chưa được đặt
+// hoặc không đúng kiểu.
 package env
 
 import (
