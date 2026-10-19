@@ -11,6 +11,14 @@ import (
 
 const version = "0.0.1"
 
+//	@title			GopherSocial API
+//	@description	API cho mạng xã hội GopherSocial
+//	@version		0.0.1
+//	@BasePath		/v1
+
+// @securityDefinitions.apikey	ApiKeyAuth
+// @in							header
+// @name						Authorization
 func main() {
 
 	_ = godotenv.Load()
@@ -23,7 +31,8 @@ func main() {
 			maxIdleConns: env.GetInt("DB_MAX_IDLE_CONNS", 30),
 			maxIdleTime:  env.GetString("DB_MAX_IDLE_TIME", "15m"),
 		},
-		env: env.GetString("ENV", "development"),
+		env:    env.GetString("ENV", "development"),
+		apiURL: env.GetString("EXTERNAL_URL", "localhost:8080"),
 	}
 
 	db, err := db.New(cfg.db.addr, cfg.db.maxIdleConns, cfg.db.maxOpenConns, cfg.db.maxIdleTime)

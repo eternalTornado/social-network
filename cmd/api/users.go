@@ -18,12 +18,39 @@ type FollowUser struct {
 	UserID int64 `json:"user_id"`
 }
 
+// getUserHandler godoc
+//
+//	@Summary	Lấy thông tin user
+//	@Tags		users
+//	@Produce	json
+//	@Param		userID	path		int	true	"User ID"
+//	@Success	200		{object}	DataResponse{data=store.User}
+//	@Failure	400		{object}	ErrorResponse
+//	@Failure	404		{object}	ErrorResponse
+//	@Failure	500		{object}	ErrorResponse
+//	@Security	ApiKeyAuth
+//	@Router		/users/{userID} [get]
 func (app *application) getUserHandler(w http.ResponseWriter, r *http.Request) {
 	user := getUserFromContext(r)
 
 	app.jsonResponse(w, http.StatusOK, user)
 }
 
+// followUserHandler godoc
+//
+//	@Summary		Follow một user
+//	@Description	user_id trong body là người đi follow (tạm thời, chưa có đăng nhập); userID trên path là người được follow
+//	@Tags			users
+//	@Accept			json
+//	@Param			userID	path	int			true	"ID người được follow"
+//	@Param			payload	body	FollowUser	true	"Người đi follow"
+//	@Success		200		"OK"
+//	@Failure		400		{object}	ErrorResponse
+//	@Failure		404		{object}	ErrorResponse
+//	@Failure		409		{object}	ErrorResponse
+//	@Failure		500		{object}	ErrorResponse
+//	@Security		ApiKeyAuth
+//	@Router			/users/{userID}/follow [put]
 func (app *application) followUserHandler(w http.ResponseWriter, r *http.Request) {
 	followedUser := getUserFromContext(r)
 
@@ -46,6 +73,20 @@ func (app *application) followUserHandler(w http.ResponseWriter, r *http.Request
 	}
 }
 
+// unfollowUserHandler godoc
+//
+//	@Summary		Unfollow một user
+//	@Description	user_id trong body là người bỏ follow (tạm thời, chưa có đăng nhập); userID trên path là người bị unfollow
+//	@Tags			users
+//	@Accept			json
+//	@Param			userID	path	int			true	"ID người bị unfollow"
+//	@Param			payload	body	FollowUser	true	"Người bỏ follow"
+//	@Success		204		"No Content"
+//	@Failure		400		{object}	ErrorResponse
+//	@Failure		404		{object}	ErrorResponse
+//	@Failure		500		{object}	ErrorResponse
+//	@Security		ApiKeyAuth
+//	@Router			/users/{userID}/Unfollow [put]
 func (app *application) unfollowUserHandler(w http.ResponseWriter, r *http.Request) {
 	followedUser := getUserFromContext(r)
 

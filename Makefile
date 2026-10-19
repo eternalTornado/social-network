@@ -12,7 +12,7 @@ DB_NAME      = socialnetwork
 
 .PHONY: help dev run build test fmt vet tidy clean \
 	db-up db-down db-reset db-logs psql \
-	migration migrate-up migrate-down migrate-version migrate-force seed
+	migration migrate-up migrate-down migrate-version migrate-force seed gen-docs
 
 ## help: In danh sách lệnh
 help:
@@ -105,6 +105,10 @@ migrate-force:
 
 seed:
 	go run ./cmd/migrate/seed/main.go
+
+gen-docs:
+	swag init -g ./api/main.go -d cmd,internal
+	swag fmt
 
 # Cho phép truyền tham số kiểu "make migration add_foo": mọi tên lạ khớp rule này và không làm gì
 %:

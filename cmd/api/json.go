@@ -30,18 +30,20 @@ func readJSON(w http.ResponseWriter, r *http.Request, data any) error {
 	return decoder.Decode(data)
 }
 
-func writeJSONError(w http.ResponseWriter, status int, message string) error {
-	type envelope struct {
-		Error string `json:"Error"`
-	}
+// DataResponse là envelope cho mọi response thành công: {"data": ...}
+type DataResponse struct {
+	Data any `json:"data"`
+}
 
-	return writeJSON(w, status, &envelope{Error: message})
+// ErrorResponse là envelope cho mọi response lỗi: {"Error": "..."}
+type ErrorResponse struct {
+	Error string `json:"Error"`
+}
+
+func writeJSONError(w http.ResponseWriter, status int, message string) error {
+	return writeJSON(w, status, &ErrorResponse{Error: message})
 }
 
 func (app *application) jsonResponse(w http.ResponseWriter, status int, data any) error {
-	type envelope struct {
-		Data any `json:"data"`
-	}
-
-	return writeJSON(w, status, &envelope{Data: data})
+	return writeJSON(w, status, &DataResponse{Data: data})
 }

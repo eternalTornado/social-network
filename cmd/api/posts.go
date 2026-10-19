@@ -20,7 +20,19 @@ type CreatePostPayload struct {
 	Tags    []string `json:"tags"`
 }
 
-// POST /v1/posts
+// createPostHandler godoc
+//
+//	@Summary		Tạo bài viết
+//	@Description	Tạo bài viết mới (tạm thời gán cứng user ID = 1, chưa có đăng nhập)
+//	@Tags			posts
+//	@Accept			json
+//	@Produce		json
+//	@Param			payload	body		CreatePostPayload	true	"Nội dung bài viết"
+//	@Success		201		{object}	DataResponse{data=store.Post}
+//	@Failure		400		{object}	ErrorResponse
+//	@Failure		500		{object}	ErrorResponse
+//	@Security		ApiKeyAuth
+//	@Router			/posts [post]
 func (app *application) createPostHandler(w http.ResponseWriter, r *http.Request) {
 	var payload CreatePostPayload
 	if err := readJSON(w, r, &payload); err != nil {
@@ -51,7 +63,19 @@ func (app *application) createPostHandler(w http.ResponseWriter, r *http.Request
 	app.jsonResponse(w, http.StatusCreated, post)
 }
 
-// GET /v1/posts/{postID}
+// getPostHandler godoc
+//
+//	@Summary		Lấy chi tiết bài viết
+//	@Description	Lấy bài viết theo ID, kèm danh sách comment
+//	@Tags			posts
+//	@Produce		json
+//	@Param			postID	path		int	true	"Post ID"
+//	@Success		200		{object}	DataResponse{data=store.Post}
+//	@Failure		400		{object}	ErrorResponse
+//	@Failure		404		{object}	ErrorResponse
+//	@Failure		500		{object}	ErrorResponse
+//	@Security		ApiKeyAuth
+//	@Router			/posts/{postID} [get]
 func (app *application) getPostHandler(w http.ResponseWriter, r *http.Request) {
 	post := getPostFromCtx(r)
 
@@ -76,6 +100,21 @@ type UpdatePostPayload struct {
 	Content *string `json:"content" validate:"omitempty,max=100"`
 }
 
+// updatePostHandler godoc
+//
+//	@Summary		Cập nhật bài viết
+//	@Description	Cập nhật một phần (PATCH) title và/hoặc content; field bỏ trống thì giữ nguyên
+//	@Tags			posts
+//	@Accept			json
+//	@Produce		json
+//	@Param			postID	path		int					true	"Post ID"
+//	@Param			payload	body		UpdatePostPayload	true	"Các field cần cập nhật"
+//	@Success		200		{object}	DataResponse{data=store.Post}
+//	@Failure		400		{object}	ErrorResponse
+//	@Failure		404		{object}	ErrorResponse
+//	@Failure		500		{object}	ErrorResponse
+//	@Security		ApiKeyAuth
+//	@Router			/posts/{postID} [patch]
 func (app *application) updatePostHandler(w http.ResponseWriter, r *http.Request) {
 	post := getPostFromCtx(r)
 
@@ -115,6 +154,17 @@ func (app *application) updatePostHandler(w http.ResponseWriter, r *http.Request
 	app.jsonResponse(w, http.StatusOK, post)
 }
 
+// deletePostHandler godoc
+//
+//	@Summary	Xoá bài viết
+//	@Tags		posts
+//	@Param		postID	path	int	true	"Post ID"
+//	@Success	204		"No Content"
+//	@Failure	400		{object}	ErrorResponse
+//	@Failure	404		{object}	ErrorResponse
+//	@Failure	500		{object}	ErrorResponse
+//	@Security	ApiKeyAuth
+//	@Router		/posts/{postID} [delete]
 func (app *application) deletePostHandler(w http.ResponseWriter, r *http.Request) {
 	post := getPostFromCtx(r)
 
@@ -172,6 +222,21 @@ type PostCommentsPayload struct {
 	Content string `json:"content" validate:"required,max=1000"`
 }
 
+// createCommentHandler godoc
+//
+//	@Summary		Thêm comment vào bài viết
+//	@Description	Tạo comment cho bài viết (tạm thời gán cứng user ID = 1, chưa có đăng nhập)
+//	@Tags			posts
+//	@Accept			json
+//	@Produce		json
+//	@Param			postID	path		int					true	"Post ID"
+//	@Param			payload	body		PostCommentsPayload	true	"Nội dung comment"
+//	@Success		201		{object}	DataResponse{data=store.Comment}
+//	@Failure		400		{object}	ErrorResponse
+//	@Failure		404		{object}	ErrorResponse
+//	@Failure		500		{object}	ErrorResponse
+//	@Security		ApiKeyAuth
+//	@Router			/posts/{postID}/comments [post]
 func (app *application) createCommentHandler(w http.ResponseWriter, r *http.Request) {
 
 	var payload PostCommentsPayload

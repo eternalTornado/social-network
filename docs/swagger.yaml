@@ -1,0 +1,547 @@
+basePath: /v1
+definitions:
+  main.CreatePostPayload:
+    properties:
+      content:
+        maxLength: 100
+        type: string
+      tags:
+        items:
+          type: string
+        type: array
+      title:
+        maxLength: 100
+        type: string
+    required:
+    - content
+    - title
+    type: object
+  main.DataResponse:
+    properties:
+      data: {}
+    type: object
+  main.ErrorResponse:
+    properties:
+      Error:
+        type: string
+    type: object
+  main.FollowUser:
+    properties:
+      user_id:
+        type: integer
+    type: object
+  main.PostCommentsPayload:
+    properties:
+      content:
+        maxLength: 1000
+        type: string
+    required:
+    - content
+    type: object
+  main.UpdatePostPayload:
+    properties:
+      content:
+        maxLength: 100
+        type: string
+      title:
+        maxLength: 100
+        type: string
+    type: object
+  store.Comment:
+    properties:
+      content:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: integer
+      post_id:
+        type: integer
+      user:
+        $ref: '#/definitions/store.User'
+      user_id:
+        type: integer
+    type: object
+  store.Post:
+    properties:
+      comments:
+        items:
+          $ref: '#/definitions/store.Comment'
+        type: array
+      content:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: integer
+      tags:
+        items:
+          type: string
+        type: array
+      title:
+        type: string
+      updated_at:
+        type: string
+      user:
+        $ref: '#/definitions/store.User'
+      user_id:
+        type: integer
+      version:
+        type: integer
+    type: object
+  store.PostWithMetadata:
+    properties:
+      comments:
+        items:
+          $ref: '#/definitions/store.Comment'
+        type: array
+      comments_count:
+        type: integer
+      content:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: integer
+      tags:
+        items:
+          type: string
+        type: array
+      title:
+        type: string
+      updated_at:
+        type: string
+      user:
+        $ref: '#/definitions/store.User'
+      user_id:
+        type: integer
+      version:
+        type: integer
+    type: object
+  store.User:
+    properties:
+      created_at:
+        type: string
+      email:
+        type: string
+      id:
+        type: integer
+      username:
+        type: string
+    type: object
+info:
+  contact: {}
+  description: API cho mạng xã hội GopherSocial
+  title: GopherSocial API
+  version: 0.0.1
+paths:
+  /health:
+    get:
+      description: Trả về trạng thái, môi trường và version của API
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/main.DataResponse'
+            - properties:
+                data:
+                  additionalProperties:
+                    type: string
+                  type: object
+              type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Kiểm tra tình trạng server
+      tags:
+      - ops
+  /posts:
+    post:
+      consumes:
+      - application/json
+      description: Tạo bài viết mới (tạm thời gán cứng user ID = 1, chưa có đăng nhập)
+      parameters:
+      - description: Nội dung bài viết
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/main.CreatePostPayload'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/main.DataResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/store.Post'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Tạo bài viết
+      tags:
+      - posts
+  /posts/{postID}:
+    delete:
+      parameters:
+      - description: Post ID
+        in: path
+        name: postID
+        required: true
+        type: integer
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Xoá bài viết
+      tags:
+      - posts
+    get:
+      description: Lấy bài viết theo ID, kèm danh sách comment
+      parameters:
+      - description: Post ID
+        in: path
+        name: postID
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/main.DataResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/store.Post'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Lấy chi tiết bài viết
+      tags:
+      - posts
+    patch:
+      consumes:
+      - application/json
+      description: Cập nhật một phần (PATCH) title và/hoặc content; field bỏ trống
+        thì giữ nguyên
+      parameters:
+      - description: Post ID
+        in: path
+        name: postID
+        required: true
+        type: integer
+      - description: Các field cần cập nhật
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/main.UpdatePostPayload'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/main.DataResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/store.Post'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Cập nhật bài viết
+      tags:
+      - posts
+  /posts/{postID}/comments:
+    post:
+      consumes:
+      - application/json
+      description: Tạo comment cho bài viết (tạm thời gán cứng user ID = 1, chưa có
+        đăng nhập)
+      parameters:
+      - description: Post ID
+        in: path
+        name: postID
+        required: true
+        type: integer
+      - description: Nội dung comment
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/main.PostCommentsPayload'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/main.DataResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/store.Comment'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Thêm comment vào bài viết
+      tags:
+      - posts
+  /users/{userID}:
+    get:
+      parameters:
+      - description: User ID
+        in: path
+        name: userID
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/main.DataResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/store.User'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Lấy thông tin user
+      tags:
+      - users
+  /users/{userID}/Unfollow:
+    put:
+      consumes:
+      - application/json
+      description: user_id trong body là người bỏ follow (tạm thời, chưa có đăng nhập);
+        userID trên path là người bị unfollow
+      parameters:
+      - description: ID người bị unfollow
+        in: path
+        name: userID
+        required: true
+        type: integer
+      - description: Người bỏ follow
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/main.FollowUser'
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Unfollow một user
+      tags:
+      - users
+  /users/{userID}/follow:
+    put:
+      consumes:
+      - application/json
+      description: user_id trong body là người đi follow (tạm thời, chưa có đăng nhập);
+        userID trên path là người được follow
+      parameters:
+      - description: ID người được follow
+        in: path
+        name: userID
+        required: true
+        type: integer
+      - description: Người đi follow
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/main.FollowUser'
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Follow một user
+      tags:
+      - users
+  /users/feed:
+    get:
+      description: Danh sách bài viết kèm số comment, có phân trang, lọc và tìm kiếm
+        (tạm thời gán cứng user ID = 1)
+      parameters:
+      - default: 20
+        description: Số bài tối đa (1-20)
+        in: query
+        name: limit
+        type: integer
+      - default: 0
+        description: Vị trí bắt đầu
+        in: query
+        name: offset
+        type: integer
+      - default: desc
+        description: Thứ tự theo thời gian
+        enum:
+        - asc
+        - desc
+        in: query
+        name: sort
+        type: string
+      - description: Lọc theo tag, cách nhau bằng dấu phẩy (tối đa 5)
+        in: query
+        name: tags
+        type: string
+      - description: Tìm theo title/content (tối đa 100 ký tự)
+        in: query
+        name: search
+        type: string
+      - description: Từ thời điểm, định dạng 2006-01-02 15:04:05
+        in: query
+        name: since
+        type: string
+      - description: Đến thời điểm, định dạng 2006-01-02 15:04:05
+        in: query
+        name: until
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/main.DataResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/store.PostWithMetadata'
+                  type: array
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Lấy feed của user
+      tags:
+      - feed
+securityDefinitions:
+  ApiKeyAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"
