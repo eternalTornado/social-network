@@ -4,7 +4,6 @@ package db
 import (
 	"context"
 	"database/sql"
-	"log"
 	"time"
 )
 
@@ -28,8 +27,6 @@ func New(addr string, maxOpenConns, maxIdleConns int, maxIdleTime string) (*sql.
 	if err = db.PingContext(ctx); err != nil {
 		return nil, err
 	}
-
-	log.Print("database connection pool established")
 
 	return db, nil
 }

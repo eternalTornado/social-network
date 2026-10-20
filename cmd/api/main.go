@@ -1,12 +1,11 @@
 package main
 
 import (
-	"log"
-
 	"github.com/joho/godotenv"
 	"github.com/truongndv/social/internal/db"
 	"github.com/truongndv/social/internal/env"
 	"github.com/truongndv/social/internal/store"
+	"go.uber.org/zap"
 )
 
 const version = "0.0.1"
@@ -35,11 +34,16 @@ func main() {
 		apiURL: env.GetString("EXTERNAL_URL", "localhost:8080"),
 	}
 
+	logger := zap.Must(zap.NewProduction()).Sugar()
+	defer logger.Sync()
+
 	db, err := db.New(cfg.db.addr, cfg.db.maxIdleConns, cfg.db.maxOpenConns, cfg.db.maxIdleTime)
 	if err != nil {
-		log.Panic(err)
+		logger.Fatal(err)
 	}
 	defer db.Close()
+
+	logger.Info("database connection pool established")
 
 	store := store.NewStorage(db)
 
@@ -49,5 +53,5 @@ func main() {
 	}
 
 	mux := app.mount()
-	log.Fatal(app.run(mux))
+	logger.Fatal(app.run(mux))
 }

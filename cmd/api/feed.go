@@ -35,12 +35,12 @@ func (app *application) getUserFeedHandler(w http.ResponseWriter, r *http.Reques
 
 	fq, err := fq.Parse(r)
 	if err != nil {
-		badRequestError(w, r, err)
+		app.badRequestError(w, r, err)
 		return
 	}
 
 	if err := Validate.Struct(fq); err != nil {
-		badRequestError(w, r, err)
+		app.badRequestError(w, r, err)
 		return
 	}
 
@@ -48,7 +48,7 @@ func (app *application) getUserFeedHandler(w http.ResponseWriter, r *http.Reques
 
 	feed, err := app.store.Posts.GetUserFeed(ctx, userID, fq)
 	if err != nil {
-		internalServerError(w, r, err)
+		app.internalServerError(w, r, err)
 		return
 	}
 
