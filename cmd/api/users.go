@@ -56,7 +56,7 @@ func (app *application) followUserHandler(w http.ResponseWriter, r *http.Request
 
 	var payload FollowUser
 	if err := readJSON(w, r, &payload); err != nil {
-		badRequestError(w, r, err)
+		app.badRequestError(w, r, err)
 		return
 	}
 
@@ -65,9 +65,9 @@ func (app *application) followUserHandler(w http.ResponseWriter, r *http.Request
 	if err := app.store.Followers.Follow(ctx, payload.UserID, followedUser.ID); err != nil {
 		switch {
 		case errors.Is(err, store.ErrConflict):
-			conflictError(w, r, err)
+			app.conflictError(w, r, err)
 		default:
-			internalServerError(w, r, err)
+			app.internalServerError(w, r, err)
 		}
 		return
 	}
@@ -92,13 +92,13 @@ func (app *application) unfollowUserHandler(w http.ResponseWriter, r *http.Reque
 
 	var payload FollowUser
 	if err := readJSON(w, r, &payload); err != nil {
-		badRequestError(w, r, err)
+		app.badRequestError(w, r, err)
 		return
 	}
 
 	ctx := r.Context()
 	if err := app.store.Followers.Unfollow(ctx, payload.UserID, followedUser.ID); err != nil {
-		internalServerError(w, r, err)
+		app.internalServerError(w, r, err)
 		return
 	}
 
@@ -110,7 +110,7 @@ func (app *application) userContextMiddleware(next http.Handler) http.Handler {
 		idParam := chi.URLParam(r, "userID")
 		id, err := strconv.ParseInt(idParam, 10, 64)
 		if err != nil {
-			badRequestError(w, r, err)
+			app.badRequestError(w, r, err)
 			return
 		}
 
@@ -120,9 +120,9 @@ func (app *application) userContextMiddleware(next http.Handler) http.Handler {
 		if err != nil {
 			switch {
 			case errors.Is(err, store.ErrNotFound):
-				notFoundError(w, r, err)
+				app.notFoundError(w, r, err)
 			default:
-				internalServerError(w, r, err)
+				app.internalServerError(w, r, err)
 			}
 			return
 		}
